@@ -1,7 +1,8 @@
 import React, { Component } from "react";
 import axios from "axios";
-import { Card, Header,Button } from "semantic-ui-react";
+import { Card, Header, Button } from "semantic-ui-react";
 import NoteForm from "./form/to-do-list-form";
+import TodoItem from "./item/to-do-item";
 
 let endpoint = "http://localhost:9000";
 
@@ -10,6 +11,7 @@ class TodoList extends Component {
     super(props);
     this.state = {
       items: [],
+      isFormVisible: false,
     };
   }
 
@@ -36,61 +38,17 @@ class TodoList extends Component {
     axios.get(endpoint + "/api/task").then((res) => {
       if (res.data) {
         console.log(res.data);
+        const list = res.data.map((item) => {
+          return {
+            _id: item._id,
+            title: item.title,
+            note: item.note,
+            status: item.status,
+            isEditable: false,
+          };
+        });
         this.setState({
-          items: res.data.map((item) => {
-            let borderColor;
-            let textDecoration;
-            switch (item.status) {
-              case "completed":
-                borderColor = "green";
-                textDecoration = "line-through";
-                break;
-              case "inProgress":
-                borderColor = "orange";
-                textDecoration = "none";
-                break;
-              case "pending":
-                borderColor = "red";
-                textDecoration = "none";
-                break;
-              default:
-                borderColor = "black";
-                textDecoration = "none";
-            }
-            let style = {
-              wordWrap: "break-word",
-              textDecoration: textDecoration,
-              border: `2px solid ${borderColor}`,
-              borderRadius: "5px",
-              padding: "10px",
-              margin: "0 500px"
-            };
-            let noteStyle = {
-                border: "1px solid #ccc",
-                borderRadius: "5px",
-                padding: "10px",
-                marginTop: "10px",
-                backgroundColor: "#f9f9f9",
-              };
-  
-            return (
-              <div key={item._id} style={style}>
-                <div style={{ fontWeight: "bold", textDecoration: "underline" }}>
-                  {item.title}
-                </div>
-                <div style={noteStyle}>{item.note}</div>
-                <select
-                  value={item.status}
-                  onChange={(event) => this.updateTaskStatus(item._id, event.target.value)}
-                >
-                  <option value="pending">Pending</option>
-                  <option value="completed">Completed</option>
-                  <option value="inProgress">In Progress</option>
-                </select>
-                <button onClick={() => this.deleteTask(item._id)}>Delete</button>
-              </div>
-            );
-          }),
+          items: list,
         });
       } else {
         this.setState({
@@ -100,11 +58,12 @@ class TodoList extends Component {
       }
     });
   };
+
   handlePostRequest = (value) => {
     this.getTask();
   };
-  
-  updateTaskStatus = (id,status) => {
+
+  updateTaskStatus = (id, status) => {
     axios
       .put(endpoint + `/api/taskUpdate`, {
         Headers: {
@@ -112,7 +71,6 @@ class TodoList extends Component {
         },
         _id: id,
         status: status,
-        
       })
       .then(() => {
         this.getTask();
@@ -120,9 +78,9 @@ class TodoList extends Component {
   };
 
   deleteTask = (id) => {
-    console.log(id)
+    console.log(id);
     axios
-      .delete(endpoint + `/api/taskDelete` + id, {
+      .delete(endpoint + "/api/taskDelete" + id, {
         Headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
@@ -139,7 +97,6 @@ class TodoList extends Component {
     }));
   };
 
-
   render() {
     return (
       <div>
@@ -149,16 +106,27 @@ class TodoList extends Component {
           </Header>
         </div>
         <div className="row">
-        <div>
+          <div>
             <Button onClick={this.handleToggleForm}>
-                {this.state.isFormVisible ? "Hide Create Note" : "Show Create Note"}
+              {this.state.isFormVisible
+                ? "Hide Create Note"
+                : "Show Create Note"}
             </Button>
             {this.state.isFormVisible && (
               <NoteForm onPostRequest={this.handlePostRequest} />
             )}
           </div>
-          <div className="row"style={{ marginTop: "20px" }}>
-            <Card.Group>{this.state.items}</Card.Group>
+          <div className="row" style={{ marginTop: "20px" }}>
+            <Card.Group>
+              {this.state.items.map((item) => (
+                <TodoItem
+                  key={item._id}
+                  item={item}
+                  updateTaskStatus={this.updateTaskStatus}
+                  deleteTask={this.deleteTask}
+                />
+              ))}
+            </Card.Group>
           </div>
         </div>
       </div>

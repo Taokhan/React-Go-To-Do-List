@@ -98,6 +98,24 @@ func UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(task)
 }
 
+func EditTask(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Access-Control-Allow-Methods", "PUT")
+	w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+
+	var task models.ToDoList
+	err := json.NewDecoder(r.Body).Decode(&task)
+	if err != nil {
+		// Handle the decoding error here (e.g., return an error response)
+		// Example: http.Error(w, "Failed to decode task", http.StatusBadRequest)
+		return
+	}
+	fmt.Println(task)
+	updateOneTask(task)
+	json.NewEncoder(w).Encode(task)
+}
+
 func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -152,6 +170,18 @@ func updateStatus(task models.ToDoList) {
 	fmt.Println(task)
 	filter := bson.M{"_id": task.ID}
 	update := bson.M{"$set": bson.M{"status": task.Status}}
+	fmt.Println(filter, update)
+	result, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Modified count:", result.ModifiedCount)
+}
+
+func updateOneTask(task models.ToDoList) {
+	fmt.Println(task)
+	filter := bson.M{"_id": task.ID}
+	update := bson.M{"$set": bson.M{"title": task.Title, "note": task.Note, "status": task.Status}}
 	fmt.Println(filter, update)
 	result, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
