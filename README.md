@@ -1,2 +1,3 @@
 # React-Go To-Do-List
- FrontEnd React API Go Database MongoDB
+ Client React : npm start
+ server Go: go run main.go
